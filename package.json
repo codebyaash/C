@@ -1,0 +1,44 @@
+{
+  "name": "expense-calculator",
+  "version": "1.0.0",
+  "description": "A modern, full-featured expense tracking web application with analytics and charts",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server . -p 8000",
+    "server": "python3 -m http.server 8000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "expense-tracker",
+    "budget",
+    "finance",
+    "web-app",
+    "dashboard",
+    "analytics",
+    "responsive"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/expense-calculator"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

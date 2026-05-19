@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Calculator - Track Your Finances</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header Navigation -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo-section">
+                <h1 class="logo">💰 Expense Calculator</h1>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-view="dashboard">
+                    <span class="icon">📊</span> Dashboard
+                </button>
+                <button class="nav-btn" data-view="add-expense">
+                    <span class="icon">➕</span> Add Expense
+                </button>
+                <button class="nav-btn" data-view="expenses">
+                    <span class="icon">📋</span> Expenses
+                </button>
+                <button class="nav-btn" data-view="analytics">
+                    <span class="icon">📈</span> Analytics
+                </button>
+            </nav>
+            <div class="header-controls">
+                <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
+                    🌙
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Dashboard View -->
+        <section id="dashboard-view" class="view active">
+            <div class="dashboard-content">
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <div class="card total-card">
+                        <div class="card-icon">�</div>
+                        <div class="card-content">
+                            <h3>Total Expenses</h3>
+                            <p class="card-value" id="totalExpenses">₹0.00</p>
+                        </div>
+                    </div>
+
+                    <div class="card highest-card">
+                        <div class="card-icon">📍</div>
+                        <div class="card-content">
+                            <h3>Top Category</h3>
+                            <p class="card-value" id="topCategory">-</p>
+                            <small id="topCategoryAmount">₹0.00</small>
+                        </div>
+                    </div>
+
+                    <div class="card expenses-card">
+                        <div class="card-icon">📊</div>
+                        <div class="card-content">
+                            <h3>Total Transactions</h3>
+                            <p class="card-value" id="totalTransactions">0</p>
+                        </div>
+                    </div>
+
+                    <div class="card monthly-card">
+                        <div class="card-icon">📅</div>
+                        <div class="card-content">
+                            <h3>This Month</h3>
+                            <p class="card-value" id="monthlyExpenses">₹0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>Expense Distribution by Category</h3>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Monthly Expenses</h3>
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="recent-section">
+                    <h3>Recent Transactions</h3>
+                    <div class="recent-transactions" id="recentTransactions">
+                        <p class="empty-state">No transactions yet</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Expense View -->
+        <section id="add-expense-view" class="view">
+            <div class="form-container">
+                <h2>Add New Expense</h2>
+                <form id="expenseForm" class="expense-form">
+                    <div class="form-group">
+                        <label for="expenseDescription">Description</label>
+                        <input 
+                            type="text" 
+                            id="expenseDescription" 
+                            placeholder="e.g., Grocery Shopping" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expenseAmount">Amount (₹)</label>
+                            <input 
+                                type="number" 
+                                id="expenseAmount" 
+                                placeholder="0.00" 
+                                step="0.01" 
+                                min="0"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="expenseCategory">Category</label>
+                            <select id="expenseCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="Food">🍔 Food</option>
+                                <option value="Travel">✈️ Travel</option>
+                                <option value="Shopping">🛍️ Shopping</option>
+                                <option value="Bills">📄 Bills</option>
+                                <option value="Entertainment">🎬 Entertainment</option>
+                                <option value="Health">🏥 Health</option>
+                                <option value="Education">📚 Education</option>
+                                <option value="Other">📌 Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expenseDate">Date</label>
+                            <input 
+                                type="date" 
+                                id="expenseDate" 
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="expenseSpentBy">Spent By</label>
+                            <input 
+                                type="text" 
+                                id="expenseSpentBy" 
+                                placeholder="Your name or person's name" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expenseNotes">Notes (Optional)</label>
+                        <input 
+                            type="text" 
+                            id="expenseNotes" 
+                            placeholder="Add any notes..."
+                        >
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add Expense</button>
+                        <button type="reset" class="btn btn-secondary">Clear</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Expenses List View -->
+        <section id="expenses-view" class="view">
+            <div class="expenses-container">
+                <div class="expenses-header">
+                    <h2>All Expenses</h2>
+                    <div class="filter-controls">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="🔍 Search expenses..." 
+                            class="search-input"
+                        >
+                        <select id="categoryFilter" class="filter-select">
+                            <option value="">All Categories</option>
+                            <option value="Food">🍔 Food</option>
+                            <option value="Travel">✈️ Travel</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Bills">📄 Bills</option>
+                            <option value="Entertainment">🎬 Entertainment</option>
+                            <option value="Health">🏥 Health</option>
+                            <option value="Education">📚 Education</option>
+                            <option value="Other">📌 Other</option>
+                        </select>
+                        <select id="userFilter" class="filter-select">
+                            <option value="">All Users</option>
+                        </select>
+                        <input 
+                            type="date" 
+                            id="dateFilter" 
+                            class="filter-select"
+                        >
+                    </div>
+                </div>
+
+                <!-- Expense Table -->
+                <div class="expenses-table-container">
+                    <table class="expenses-table" id="expensesTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Spent By</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTableBody">
+                            <tr class="empty-row">
+                                <td colspan="7" class="empty-state">No expenses found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="expenses-summary">
+                    <p>Total: <strong id="filteredTotal">₹0.00</strong> | Count: <strong id="filteredCount">0</strong></p>
+                    <p>By User: <strong id="filteredUsers">-</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics View -->
+        <section id="analytics-view" class="view">
+            <div class="analytics-container">
+                <h2>Spending Analytics</h2>
+                
+                <!-- Monthly Summary -->
+                <div class="summary-section">
+                    <h3>Monthly Summary</h3>
+                    <div class="monthly-summary" id="monthlySummary">
+                        <p class="empty-state">No data available</p>
+                    </div>
+                </div>
+
+                <!-- Category Summary -->
+                <div class="summary-section">
+                    <h3>Category Summary</h3>
+                    <div class="category-summary" id="categorySummary">
+                        <p class="empty-state">No data available</p>
+                    </div>
+                </div>
+
+                <!-- Analytics Charts -->
+                <div class="analytics-charts">
+                    <div class="chart-container">
+                        <h3>Category Distribution</h3>
+                        <canvas id="analyticsCategory"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Monthly Trend</h3>
+                        <canvas id="analyticsMonthly"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Edit Expense Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Expense</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <form id="editForm" class="expense-form">
+                <input type="hidden" id="editExpenseId">
+
+                <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <input type="text" id="editDescription" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editAmount">Amount (₹)</label>
+                        <input type="number" id="editAmount" step="0.01" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCategory">Category</label>
+                        <select id="editCategory" required>
+                            <option value="Food">🍔 Food</option>
+                            <option value="Travel">✈️ Travel</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Bills">📄 Bills</option>
+                            <option value="Entertainment">🎬 Entertainment</option>
+                            <option value="Health">🏥 Health</option>
+                            <option value="Education">📚 Education</option>
+                            <option value="Other">📌 Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editDate">Date</label>
+                        <input type="date" id="editDate" required>
+                    </div>
+
+                    <div class="form-group">
+                            <label for="editSpentBy">Spent By</label>
+                            <input type="text" id="editSpentBy" placeholder="Name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editNotes">Notes</label>
+                        <input type="text" id="editNotes">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-danger" id="deleteExpenseBtn">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="data/sampleData.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+# VS Code Settings
+.vscode/
+*.code-workspace
+
+# OS Files
+.DS_Store
+Thumbs.db
+.env.local
+.env.*.local
+
+# IDE
+*.swp
+*.swo
+*~
+.idea/
+*.iml
+
+# Build/Dist
+node_modules/
+dist/
+build/
+*.log
+
+# Environment
+.env
+.env.development
+.env.production
+
+# Optional: Backend files (if added later)
+/server
+/api
+*.db
+*.sqlite
