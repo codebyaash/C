@@ -1,9 +1,18 @@
 const SHEET_NAME = 'Expenses';
+const SHEET_SYNC_VERSION = '2026-05-19-jsonp-upsert-v2';
 const HEADERS = ['id', 'description', 'amount', 'category', 'date', 'spentBy', 'notes', 'createdAt', 'updatedAt'];
 
 function doGet(e) {
   const action = e.parameter.action || 'list';
   const payload = JSON.parse(e.parameter.payload || '{}');
+
+  if (action === 'version') {
+    return output_({
+      ok: true,
+      version: SHEET_SYNC_VERSION,
+      actions: ['list', 'upsert', 'delete', 'replaceAll']
+    }, e.parameter.callback);
+  }
 
   if (action === 'list') {
     return output_({ ok: true, expenses: readExpenses_() }, e.parameter.callback);

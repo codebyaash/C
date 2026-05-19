@@ -15,6 +15,7 @@ class ExpenseApp {
         this.sheetWebAppUrl = ((window.EXPENSE_APP_CONFIG && window.EXPENSE_APP_CONFIG.SHEETS_WEB_APP_URL) || '').trim();
         this.pendingSyncIds = new Set(JSON.parse(localStorage.getItem('pendingSyncIds') || '[]'));
         this.pauseSheetRefreshUntil = 0;
+        this.sheetBackendVersion = null;
         this.chartInstances = {
             category: null,
             monthly: null,
@@ -54,6 +55,7 @@ class ExpenseApp {
         }
 
         try {
+            await this.checkSheetBackendVersion();
             const sheetExpenses = await this.fetchSheetExpenses();
             if (sheetExpenses.length > 0) {
                 this.expenses = this.mergeExpenses(sheetExpenses, this.expenses);
@@ -102,6 +104,16 @@ class ExpenseApp {
     async fetchSheetExpenses() {
         const data = await this.sheetRequest('list');
         return Array.isArray(data.expenses) ? data.expenses : [];
+    }
+
+    async checkSheetBackendVersion() {
+        try {
+            const data = await this.sheetRequest('version');
+            this.sheetBackendVersion = data.version || null;
+        } catch (error) {
+            this.sheetBackendVersion = null;
+            this.showToast('Google Sheet backend is old. Redeploy Apps Script.', 'error');
+        }
     }
 
     sheetRequest(action, payload = {}) {
@@ -160,7 +172,10 @@ class ExpenseApp {
             this.clearPendingSync(expense.id);
         } catch (error) {
             console.error('Google Sheets upsert failed:', error);
-            this.showToast('Saved locally. Sheet sync failed.', 'error');
+            const message = error.message.includes('Unknown action')
+                ? 'Saved locally. Redeploy Apps Script to sync.'
+                : 'Saved locally. Sheet sync failed.';
+            this.showToast(message, 'error');
         }
     }
 

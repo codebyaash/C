@@ -16,6 +16,18 @@ Use this when you want the same expenses to appear on iPhone, laptop, and any ot
 
 If you already deployed once, paste the latest `google-apps-script.js` code, then use **Deploy -> Manage deployments -> Edit -> New version -> Deploy**. GitHub Pages will not sync correctly until the deployed Apps Script version has the latest code.
 
+To confirm the deployed backend is current, open:
+
+```text
+YOUR_WEB_APP_URL?action=version
+```
+
+It should include:
+
+```json
+{"ok":true,"version":"2026-05-19-jsonp-upsert-v2"}
+```
+
 ## 2. Connect This App to the Sheet
 
 Open `config.js` and paste the Web App URL:
@@ -68,3 +80,4 @@ If the app says `Using local data. Sheet sync unavailable.`:
 2. Confirm the Apps Script deployment was updated to a new version after pasting the latest `google-apps-script.js`.
 3. Open the Web App URL directly in a browser. It should show JSON with `ok` and `expenses`.
 4. Confirm Apps Script access is set to `Anyone`.
+5. Open `YOUR_WEB_APP_URL?action=version`. If it says `Unknown action`, the deployed Apps Script is old and must be redeployed as a new version.
