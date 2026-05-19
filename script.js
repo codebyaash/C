@@ -14,6 +14,7 @@ class ExpenseApp {
         this.currentEditingId = null;
         this.sheetWebAppUrl = ((window.EXPENSE_APP_CONFIG && window.EXPENSE_APP_CONFIG.SHEETS_WEB_APP_URL) || '').trim();
         this.pendingSyncIds = new Set(JSON.parse(localStorage.getItem('pendingSyncIds') || '[]'));
+        this.pauseSheetRefreshUntil = 0;
         this.chartInstances = {
             category: null,
             monthly: null,
@@ -84,6 +85,14 @@ class ExpenseApp {
     clearPendingSync(id) {
         this.pendingSyncIds.delete(Number(id));
         this.savePendingSyncIds();
+    }
+
+    pauseSheetRefresh(duration = 30000) {
+        this.pauseSheetRefreshUntil = Date.now() + duration;
+    }
+
+    isSheetRefreshPaused() {
+        return Date.now() < this.pauseSheetRefreshUntil;
     }
 
     isSheetSyncEnabled() {
@@ -187,10 +196,14 @@ class ExpenseApp {
     mergeExpenses(sheetExpenses, localExpenses) {
         const merged = new Map();
 
-        sheetExpenses.forEach(expense => merged.set(Number(expense.id), expense));
         localExpenses.forEach(expense => {
-            if (this.pendingSyncIds.has(Number(expense.id)) || !merged.has(Number(expense.id))) {
-                merged.set(Number(expense.id), expense);
+            merged.set(Number(expense.id), expense);
+        });
+
+        sheetExpenses.forEach(expense => {
+            const id = Number(expense.id);
+            if (!merged.has(id)) {
+                merged.set(id, expense);
             }
         });
 
@@ -269,6 +282,10 @@ class ExpenseApp {
 
     async refreshFromSheet() {
         if (!this.isSheetSyncEnabled()) {
+            return;
+        }
+
+        if (this.isSheetRefreshPaused()) {
             return;
         }
 
@@ -380,6 +397,7 @@ class ExpenseApp {
         }
 
         this.expenses.push(expense);
+        this.pauseSheetRefresh();
         await this.saveExpenses({ syncRemote: false });
         this.syncExpenseToSheet(expense);
         
@@ -468,6 +486,7 @@ class ExpenseApp {
         }
 
         this.expenses[expenseIndex] = updatedExpense;
+        this.pauseSheetRefresh();
         await this.saveExpenses({ syncRemote: false });
         this.syncExpenseToSheet(updatedExpense);
         this.showToast('Expense updated successfully!', 'success');
@@ -482,6 +501,7 @@ class ExpenseApp {
 
         const id = parseInt(document.getElementById('editExpenseId').value);
         this.expenses = this.expenses.filter(e => e.id !== id);
+        this.pauseSheetRefresh();
         await this.saveExpenses({ syncRemote: false });
         this.deleteExpenseFromSheet(id);
         this.showToast('Expense deleted successfully!', 'success');
