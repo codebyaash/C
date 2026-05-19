@@ -768,8 +768,9 @@ body {
    ============================================ */
 
 .toast {
+    display: none;
     position: fixed;
-    bottom: var(--spacing-lg);
+    top: var(--spacing-lg);
     right: var(--spacing-lg);
     background-color: var(--success);
     color: #ffffff;
@@ -779,6 +780,7 @@ body {
     z-index: 2000;
     max-width: 400px;
     animation: slideInRight 0.3s ease-in-out;
+    pointer-events: none;
 }
 
 .toast.show {
@@ -964,8 +966,11 @@ body {
     .toast {
         left: var(--spacing-lg);
         right: var(--spacing-lg);
-        bottom: var(--spacing-lg);
+        top: var(--spacing-sm);
+        bottom: auto;
         max-width: none;
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-sm);
     }
 }
 

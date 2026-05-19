@@ -56,11 +56,9 @@ class ExpenseApp {
             if (sheetExpenses.length > 0) {
                 this.expenses = sheetExpenses;
                 await this.saveExpenses({ syncRemote: false });
-                this.showToast('Synced expenses from Google Sheets', 'success');
             } else {
                 this.expenses = [];
                 await this.saveExpenses({ syncRemote: false });
-                this.showToast('Connected to Google Sheets', 'success');
             }
         } catch (error) {
             console.error('Google Sheets sync failed:', error);
@@ -348,8 +346,7 @@ class ExpenseApp {
 
         this.expenses.push(expense);
         await this.saveExpenses({ syncRemote: false });
-        await this.syncExpenseToSheet(expense);
-        this.showToast('Expense added successfully!', 'success');
+        this.syncExpenseToSheet(expense);
         
         // Reset form and update views
         const form = e.target;
@@ -359,6 +356,7 @@ class ExpenseApp {
         
         // Switch to dashboard
         this.switchView('dashboard');
+        this.showToast('Expense added successfully!', 'success');
     }
 
     validateExpense(expense) {
@@ -436,7 +434,7 @@ class ExpenseApp {
 
         this.expenses[expenseIndex] = updatedExpense;
         await this.saveExpenses({ syncRemote: false });
-        await this.syncExpenseToSheet(updatedExpense);
+        this.syncExpenseToSheet(updatedExpense);
         this.showToast('Expense updated successfully!', 'success');
         this.closeEditModal();
         this.updateAllViews();
@@ -450,7 +448,7 @@ class ExpenseApp {
         const id = parseInt(document.getElementById('editExpenseId').value);
         this.expenses = this.expenses.filter(e => e.id !== id);
         await this.saveExpenses({ syncRemote: false });
-        await this.deleteExpenseFromSheet(id);
+        this.deleteExpenseFromSheet(id);
         this.showToast('Expense deleted successfully!', 'success');
         this.closeEditModal();
         this.updateAllViews();
