@@ -13,6 +13,7 @@ class ExpenseApp {
         this.expenses = [];
         this.currentEditingId = null;
         this.sheetWebAppUrl = ((window.EXPENSE_APP_CONFIG && window.EXPENSE_APP_CONFIG.SHEETS_WEB_APP_URL) || '').trim();
+        this.pendingSyncIds = new Set(JSON.parse(localStorage.getItem('pendingSyncIds') || '[]'));
         this.chartInstances = {
             category: null,
             monthly: null,
@@ -54,10 +55,7 @@ class ExpenseApp {
         try {
             const sheetExpenses = await this.fetchSheetExpenses();
             if (sheetExpenses.length > 0) {
-                this.expenses = sheetExpenses;
-                await this.saveExpenses({ syncRemote: false });
-            } else {
-                this.expenses = [];
+                this.expenses = this.mergeExpenses(sheetExpenses, this.expenses);
                 await this.saveExpenses({ syncRemote: false });
             }
         } catch (error) {
@@ -66,18 +64,26 @@ class ExpenseApp {
         }
     }
 
-    // Save expenses to localStorage and, when configured, Google Sheets.
-    async saveExpenses({ syncRemote = true } = {}) {
+    async saveExpenses({ syncRemote = false } = {}) {
         localStorage.setItem('expenses', JSON.stringify(this.expenses));
 
-        if (syncRemote && this.isSheetSyncEnabled()) {
-            try {
-                await this.replaceSheetExpenses();
-            } catch (error) {
-                console.error('Google Sheets save failed:', error);
-                this.showToast('Saved locally. Sheet sync failed.', 'error');
-            }
+        if (syncRemote) {
+            await this.syncPendingExpenses();
         }
+    }
+
+    savePendingSyncIds() {
+        localStorage.setItem('pendingSyncIds', JSON.stringify([...this.pendingSyncIds]));
+    }
+
+    markPendingSync(id) {
+        this.pendingSyncIds.add(Number(id));
+        this.savePendingSyncIds();
+    }
+
+    clearPendingSync(id) {
+        this.pendingSyncIds.delete(Number(id));
+        this.savePendingSyncIds();
     }
 
     isSheetSyncEnabled() {
@@ -119,7 +125,7 @@ class ExpenseApp {
                 if (data && data.ok === false) {
                     reject(new Error(data.error || `Sheet ${action} failed`));
                 } else {
-                    resolve(data);
+                    resolve(data || {});
                 }
             };
 
@@ -133,19 +139,16 @@ class ExpenseApp {
         });
     }
 
-    async replaceSheetExpenses() {
-        await this.sheetRequest('replaceAll', {
-            expenses: this.expenses
-        });
-    }
-
     async syncExpenseToSheet(expense) {
         if (!this.isSheetSyncEnabled()) {
             return;
         }
 
+        this.markPendingSync(expense.id);
+
         try {
             await this.sheetRequest('upsert', { expense });
+            this.clearPendingSync(expense.id);
         } catch (error) {
             console.error('Google Sheets upsert failed:', error);
             this.showToast('Saved locally. Sheet sync failed.', 'error');
@@ -159,10 +162,39 @@ class ExpenseApp {
 
         try {
             await this.sheetRequest('delete', { id });
+            this.clearPendingSync(id);
         } catch (error) {
             console.error('Google Sheets delete failed:', error);
             this.showToast('Deleted locally. Sheet sync failed.', 'error');
         }
+    }
+
+    async syncPendingExpenses() {
+        if (!this.isSheetSyncEnabled()) {
+            return;
+        }
+
+        const pendingIds = [...this.pendingSyncIds];
+
+        for (const id of pendingIds) {
+            const expense = this.expenses.find(item => Number(item.id) === Number(id));
+            if (expense) {
+                await this.syncExpenseToSheet(expense);
+            }
+        }
+    }
+
+    mergeExpenses(sheetExpenses, localExpenses) {
+        const merged = new Map();
+
+        sheetExpenses.forEach(expense => merged.set(Number(expense.id), expense));
+        localExpenses.forEach(expense => {
+            if (this.pendingSyncIds.has(Number(expense.id)) || !merged.has(Number(expense.id))) {
+                merged.set(Number(expense.id), expense);
+            }
+        });
+
+        return [...merged.values()];
     }
 
     getUniqueUsers() {
@@ -242,15 +274,18 @@ class ExpenseApp {
 
         try {
             const sheetExpenses = await this.fetchSheetExpenses();
+            const mergedExpenses = this.mergeExpenses(sheetExpenses, this.expenses);
+
             const currentData = JSON.stringify(this.expenses);
-            const sheetData = JSON.stringify(sheetExpenses);
+            const sheetData = JSON.stringify(mergedExpenses);
 
             if (currentData !== sheetData) {
-                this.expenses = sheetExpenses;
+                this.expenses = mergedExpenses;
                 await this.saveExpenses({ syncRemote: false });
                 this.updateAllViews();
-                this.showToast('Updated from Google Sheets', 'success');
             }
+
+            await this.syncPendingExpenses();
         } catch (error) {
             console.error('Google Sheets refresh failed:', error);
         }
